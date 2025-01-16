@@ -2,6 +2,7 @@ import os
 import signal
 import threading
 import time
+import argparse
 from queue import Queue
 from dotenv import load_dotenv
 from utils.eventrecorder import Recorder
@@ -30,17 +31,39 @@ def make_proxy(prefix=""):
     port = os.getenv(f"SCRAPOXY{prefix}_PORT")
     url = os.getenv("SCRAPOXY_URL")
     crt = os.getenv(f"SCRAPOXY{prefix}_CRT")
+
+    if not all([user, token, port, url]):
+        logger.error(f"Missing proxy configuration for prefix '{prefix}'.")
+        raise ValueError(f"Incomplete proxy configuration for prefix '{prefix}'.")
+
     proxy_url = f"http://{user}:{token}@{url}:{port}"
     return proxy_url, crt
 
 proxies = [make_proxy(), make_proxy("_2")]
 
 def main():
+    parser = argparse.ArgumentParser(description="Threaded API Miner")
+    parser.add_argument(
+        "--endpoint",
+        type=str,
+        default=os.getenv("DEFAULT_ENDPOINT", "awards"),
+        help="The endpoint key to use (default: 'awards')."
+    )
+    args = parser.parse_args()
+
+    endpoint_key = args.endpoint
+    if endpoint_key not in endpoints:
+        logger.error(f"Invalid endpoint key: {endpoint_key}. Available keys: {list(endpoints.keys())}")
+        return
+
+    endpoint_config = endpoints[endpoint_key]
     app_state = {
         'terminate_flag': threading.Event(),
         'writer_terminate_flag': threading.Event(),
         'failure_terminate_flag': threading.Event()
     }
+
+    signal.signal(signal.SIGINT, handle_interrupt)
 
     def handle_interrupt(signal_num, frame):
         logger.info("Interrupt received. Cleaning up...")
@@ -51,7 +74,6 @@ def main():
 
     signal.signal(signal.SIGINT, handle_interrupt)
 
-    endpoint_key = "awards"  # Example endpoint
     endpoint_config = endpoints[endpoint_key]
 
     progress_updater = ProgressUpdater(total=MAX_RECORDS)
@@ -100,6 +122,7 @@ def main():
             ),
             name=f"Worker-{num}"
         )
+        t.daemon = True  # Ensure thread terminates with the main program
         t.start()
         threads.append(t)
 
@@ -119,6 +142,7 @@ def main():
         ),
         name="WriterThread"
     )
+    writer.daemon = True
     writer.start()
 
     failure_writer = threading.Thread(
@@ -136,26 +160,39 @@ def main():
         ),
         name="FailWriterThread"
     )
+    failure_writer.daemon = True
     failure_writer.start()
 
     start_time = time.time()
 
-    record_queue.join()
+    try:
+        record_queue.join(timeout=30)
+    except Exception as e:
+        logger.error(f"Error while waiting for record_queue to join: {e}")
+    
     for _ in range(NUM_THREADS):
         result_queue.put(SENTINEL)
     app_state['terminate_flag'].set()
 
-    result_queue.join()
+    try:
+        result_queue.join(timeout=30)
+    except Exception as e:
+        logger.error(f"Error while waiting for result_queue to join: {e}")
+
     failure_queue.put(SENTINEL)
-    failure_queue.join()
+
+    try:
+        failure_queue.join(timeout=30)
+    except Exception as e:
+        logger.error(f"Error while waiting for failure_queue to join: {e}")
 
     app_state['writer_terminate_flag'].set()
     app_state['failure_terminate_flag'].set()
 
     for t in threads:
-        t.join()
-    writer.join()
-    failure_writer.join()
+        t.join(timeout=10)
+    writer.join(timeout=10)
+    failure_writer.join(timeout=10)
 
     progress_updater.close()
     end_time = time.time()
