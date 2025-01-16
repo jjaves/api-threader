@@ -35,11 +35,11 @@ class BaseClient:
             return data
         return [{field: BaseClient.safe_get(item, *field) for field in fields} for item in data]
 
-    def get_imdb_endpoint_ids(self, table_name, column_counter, counter_filter=1, limit=100, order_type="desc"):
+    def get_example_endpoint_ids(self, table_name, column_counter, counter_filter=1, limit=100, order_type="desc"):
         """
-        Mock method to simulate fetching unprocessed IMDb IDs from a database.
+        Mock method to simulate fetching unprocessed example IDs from a database.
         """
-        logger.info(f"Fetching IMDb IDs from table: {table_name}")
+        logger.info(f"Fetching example IDs from table: {table_name}")
         # Example: Simulate fetching IDs
         return [(f"tt{id:07d}", counter_filter) for id in range(1, limit + 1)]
 

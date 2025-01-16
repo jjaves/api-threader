@@ -52,20 +52,20 @@ def worker(record_queue, result_queue, failure_queue, batch_size, config, connec
             progress_updater.set_meta("🫸", record_queue.qsize())
             break
 
-        imdb_id, record_count = item
+        example_id, record_count = item
 
         try:
             progress_updater.increment_meta("🙋", 1)
             progress_updater.update(1)
-            resp_data = config["get_function"](imdb_id, record_count, config, session=session)
+            resp_data = config["get_function"](example_id, record_count, config, session=session)
 
             if not resp_data:
-                logger.error(f"No data returned for ID {imdb_id} with {record_count} records")
+                logger.error(f"No data returned for ID {example_id} with {record_count} records")
                 continue
 
-            filtered = config["filter_func"](resp_data, imdb_id, config)
+            filtered = config["filter_func"](resp_data, example_id, config)
             if not filtered:
-                logger.error(f"Filtering failed for {imdb_id} with {record_count} records")
+                logger.error(f"Filtering failed for {example_id} with {record_count} records")
                 continue
 
             local_batch.extend(filtered)
@@ -74,7 +74,7 @@ def worker(record_queue, result_queue, failure_queue, batch_size, config, connec
                 local_batch.clear()
 
         except Exception as e:
-            logger.error(f"Error processing ID {imdb_id}: {e}")
+            logger.error(f"Error processing ID {example_id}: {e}")
         finally:
             record_queue.task_done()
             progress_updater.set_meta("🫸", record_queue.qsize())

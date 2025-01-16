@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from utils.eventrecorder import Recorder
 from utils.progress_bar import ProgressUpdater
 from utils.workers import worker, writer_thread, failure_worker
-from imdb_client.base_client import BaseClient
-from imdb_client.endpoints_config import endpoints
+from example_client.base_client import BaseClient
+from example_client.endpoints_config import endpoints
 from utils.config_loader import load_config
 
 load_dotenv()
@@ -59,7 +59,7 @@ def main():
         progress_updater.set_meta(key, 0)
 
     base_data = BaseClient(config["DUCKDB_TOKEN"], max_records=MAX_RECORDS)
-    unprocessed_ids = base_data.get_imdb_endpoint_ids(
+    unprocessed_ids = base_data.get_example_endpoint_ids(
         endpoint_config["table_name"],
         endpoint_config.get("column_counter", 1),
         counter_filter=1,

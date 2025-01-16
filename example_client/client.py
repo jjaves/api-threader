@@ -10,12 +10,12 @@ logging.getLogger("requests").setLevel(logging.DEBUG)
 logger = logging.getLogger("retry_logger")
 
 
-def get_data_for_params(imdb_id, base_variables, config=None, session=None, enum_params=None):
+def get_data_for_params(example_id, base_variables, config=None, session=None, enum_params=None):
     """
     API Requests with pagination and variables. If enum_params, merges with base_variables.
     """
     headers = {'content-type': 'application/json'}
-    url = "https://caching.graphql.imdb.com/"
+    url = "https://caching.graphql.example.com/"
     extensions = {
         "persistedQuery": {
             "sha256Hash": config["query_hash"],
@@ -47,8 +47,8 @@ def get_data_for_params(imdb_id, base_variables, config=None, session=None, enum
             response = session.post(url, headers=headers, json=payload, timeout=(4, 3))
             response.raise_for_status()
             if response.history:
-                logger.warning(f"Permanent Redirect : {imdb_id}")
-                format_failed(imdb_id, "308 Permanent Redirect", str(response.url), config["table_name"])
+                logger.warning(f"Permanent Redirect : {example_id}")
+                format_failed(example_id, "308 Permanent Redirect", str(response.url), config["table_name"])
                 return None
 
             data = response.json()
@@ -70,13 +70,13 @@ def get_data_for_params(imdb_id, base_variables, config=None, session=None, enum
             if not next_cursor or not has_next_page:
                 break
         except requests.exceptions.JSONDecodeError as e:
-            logger.error(f"json decode error for {imdb_id}: {e}")
+            logger.error(f"json decode error for {example_id}: {e}")
         except requests.exceptions.HTTPError as e:
             if response.status_code == 404:
-                logger.warning(f"404 Not Found: {imdb_id}")
-                format_failed(imdb_id, "404 Not Found", str(e), config['table_name'])
+                logger.warning(f"404 Not Found: {example_id}")
+                format_failed(example_id, "404 Not Found", str(e), config['table_name'])
             else:
-                logger.error(f"HTTP error for {imdb_id}: {e}")
+                logger.error(f"HTTP error for {example_id}: {e}")
             return None
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed: {e}")
@@ -85,7 +85,7 @@ def get_data_for_params(imdb_id, base_variables, config=None, session=None, enum
     return all_data
 
 
-def enum_requests(imdb_id, record_count=50, config=None, session=None):
+def enum_requests(example_id, record_count=50, config=None, session=None):
     """
     Checks for enums in the config. If present, iterate over all enum combinations.
     Otherwise, call the data function directly.
@@ -95,7 +95,7 @@ def enum_requests(imdb_id, record_count=50, config=None, session=None):
         "locale": "en-US",
     }
     id_key = config.get("id_param", "const")
-    base_variables[id_key] = imdb_id
+    base_variables[id_key] = example_id
 
     if config.get("sort"):
         base_variables["sort"] = config["sort"]
@@ -110,24 +110,24 @@ def enum_requests(imdb_id, record_count=50, config=None, session=None):
         enum_values = list(enums.values())
         for combo in product(*enum_values):
             enum_params = dict(zip(enum_keys, combo))
-            data = get_data_for_params(imdb_id, base_variables, config, session, enum_params)
+            data = get_data_for_params(example_id, base_variables, config, session, enum_params)
             if data:
                 all_results.extend(data)
     else:
-        all_results = get_data_for_params(imdb_id, base_variables, config, session)
+        all_results = get_data_for_params(example_id, base_variables, config, session)
     return all_results
 
 
-def get_location_details(imdb_id, record_count=100, config=None, session=None):
+def get_location_details(example_id, record_count=100, config=None, session=None):
     """Get locations of titles."""
     headers = {'content-type': 'application/json'}
-    url = "https://caching.graphql.imdb.com/"
+    url = "https://caching.graphql.example.com/"
 
     try:
         payload = {
             "operationName": config["endpoint_name"],
             "variables": {
-                "const": imdb_id,
+                "const": example_id,
                 "first": record_count,
                 "locale": "en-US"
             },
@@ -143,16 +143,16 @@ def get_location_details(imdb_id, record_count=100, config=None, session=None):
         response.raise_for_status()
 
         if response.history:
-            logger.warning(f"Permanent Redirect : {imdb_id}")
-            format_failed(imdb_id, "308 Permanent Redirect", str(response.url), config["table_name"])
+            logger.warning(f"Permanent Redirect : {example_id}")
+            format_failed(example_id, "308 Permanent Redirect", str(response.url), config["table_name"])
             return None
 
     except requests.exceptions.HTTPError as e:
         if response.status_code == 404:
-            logger.warning(f"404 Not Found: {imdb_id}")
-            format_failed(imdb_id, "404 Not Found", str(e), config['table_name'])
+            logger.warning(f"404 Not Found: {example_id}")
+            format_failed(example_id, "404 Not Found", str(e), config['table_name'])
         else:
-            logger.error(f"HTTP error for {imdb_id}: {e}")
+            logger.error(f"HTTP error for {example_id}: {e}")
         return None
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed: {e}")
