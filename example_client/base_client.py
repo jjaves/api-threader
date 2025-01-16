@@ -1,4 +1,4 @@
-# Python
+
 import logging
 import requests
 
@@ -40,7 +40,7 @@ class BaseClient:
         Mock method to simulate fetching unprocessed example IDs from a database.
         """
         logger.info(f"Fetching example IDs from table: {table_name}")
-        # Example: Simulate fetching IDs
+        # Simulate fetching IDs
         return [(f"tt{id:07d}", counter_filter) for id in range(1, limit + 1)]
 
     def close(self):
