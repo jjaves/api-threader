@@ -1,3 +1,5 @@
+## **This is a bare bones example of a working project**
+
 # Threaded API Miner
 A multithreaded tool for mining data from APIs with configurable endpoints.
 
