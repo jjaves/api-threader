@@ -1,7 +1,7 @@
 import logging
 from queue import Empty
 import duckdb
-from utils.data_store import write_to_motherduck, write_to_disk
+from utils.data_store import write_to_duckdb, write_to_disk
 from utils.http_retry import requests_retry_session
 
 logger = logging.getLogger(__name__)
@@ -26,12 +26,12 @@ def writer_thread(result_queue, record_queue, thread, batch_size, max_records, c
             logger.error(f"Error in writer thread: {e}")
 
         if len(aggregated_batch) >= aggregation_threshold:
-            write_to_motherduck(aggregated_batch, config["table_name"], con_writer, progress_updater)
+            write_to_duckdb(aggregated_batch, config["table_name"], con_writer, progress_updater)
             progress_updater.increment_meta("🤔", -len(aggregated_batch))
             aggregated_batch.clear()
 
     if aggregated_batch:
-        write_to_motherduck(aggregated_batch, config["table_name"], con_writer, progress_updater)
+        write_to_duckdb(aggregated_batch, config["table_name"], con_writer, progress_updater)
         progress_updater.increment_meta("🤔", -len(aggregated_batch))
         aggregated_batch.clear()
 

@@ -5,7 +5,7 @@ def load_config():
     """Load environment variables from .env file."""
     load_dotenv()
     config = {
-        "MOTHERDUCK_TOKEN": os.getenv("MOTHERDUCK_TOKEN"),
+        "DUCKDB_TOKEN": os.getenv("DUCKDB_TOKEN"),
         "SCRAPOXY_USER": os.getenv("SCRAPOXY_USER"),
         "SCRAPOXY_TOKEN": os.getenv("SCRAPOXY_TOKEN"),
         "SCRAPOXY_URL": os.getenv("SCRAPOXY_URL"),

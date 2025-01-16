@@ -26,8 +26,8 @@ def write_to_disk(batch, table_name):
 
     logger.debug(f"JSON & Parquet file written to disk at {fail_path}")
 
-def write_to_motherduck(batch, table_name, con, progress_updater):
-    """Write batch to MotherDuck database."""
+def write_to_duckdb(batch, table_name, con, progress_updater):
+    """Write batch to DuckDB database."""
     global records_written
 
     try:
@@ -36,7 +36,7 @@ def write_to_motherduck(batch, table_name, con, progress_updater):
 
         progress_updater.increment_meta("✍️", len(batch))
         records_written += len(batch)
-        logger.info(f"Wrote {len(batch)} records to MotherDuck (Total: {records_written})")
+        logger.info(f"Wrote {len(batch)} records to DuckDB (Total: {records_written})")
     except duckdb.Error as e:
-        logger.error(f"Error writing to MotherDuck: {e}")
+        logger.error(f"Error writing to DuckDB: {e}")
         write_to_disk(batch, table_name)
