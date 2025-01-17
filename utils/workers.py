@@ -21,7 +21,7 @@ def writer_thread(
         sentinel,
 ):
     """
-    Single thread responsible for aggregating data from result_queue and writing it to MotherDuck.
+    Single thread responsible for aggregating data from result_queue and writing it to DuckDB.
     """
     aggregated_batch = []
     aggregation_threshold = min(thread * batch_size // 2, max_records)
@@ -42,12 +42,12 @@ def writer_thread(
             logger.error(f"Error in writer thread: {e}")
 
         if len(aggregated_batch) >= aggregation_threshold:
-            write_to_motherduck(aggregated_batch, config["table_name"], con_writer, progress_updater)
+            write_to_duckdb(aggregated_batch, config["table_name"], con_writer, progress_updater)
             progress_updater.increment_meta("🤔", -len(aggregated_batch))
             aggregated_batch.clear()
 
     if aggregated_batch:
-        write_to_motherduck(aggregated_batch, config["table_name"], con_writer, progress_updater)
+        write_to_duckdb(aggregated_batch, config["table_name"], con_writer, progress_updater)
         progress_updater.increment_meta("🤔", -len(aggregated_batch))
         aggregated_batch.clear()
 
@@ -83,28 +83,28 @@ def worker(
             progress_updater.set_meta("🫸", record_queue.qsize())
             break
 
-        imdb_id, record_count = item
+        example_id, record_count = item
 
         try:
             progress_updater.increment_meta("🙋", 1)
             progress_updater.update(1)
-            resp_data = config["get_function"](imdb_id, record_count, config, session=session)
+            resp_data = config["get_function"](example_id, record_count, config, session=session)
 
             if not resp_data:
-                logger.error(f"No data returned for ID {imdb_id} with {record_count} records")
+                logger.error(f"No data returned for ID {example_id} with {record_count} records")
                 continue
 
-            filtered = config["filter_func"](resp_data, imdb_id, config)
+            filtered = config["filter_func"](resp_data, example_id, config)
             if not filtered:
                 format_failed(
-                    imdb_id=imdb_id,
+                    example_id=example_id,
                     reason_code="No Data",
                     error_message="No data returned",
                     table_name=config["table_name"],
                     failure_queue=failure_queue,
                     progress_updater=progress_updater
                 )
-                logger.error(f"Filtering failed for {imdb_id} with {record_count} records")
+                logger.error(f"Filtering failed for {example_id} with {record_count} records")
                 continue
 
             local_batch.extend(filtered)
@@ -113,7 +113,7 @@ def worker(
                 local_batch.clear()
 
         except Exception as e:
-            logger.error(f"Error processing ID {imdb_id}: {e}")
+            logger.error(f"Error processing ID {example_id}: {e}")
         finally:
             record_queue.task_done()
             progress_updater.set_meta("🫸", record_queue.qsize())
@@ -134,7 +134,7 @@ def failure_worker(
         sentinel
 ):
     """
-    Stores failure records in a global dictionary and writes to MotherDuck.
+    Stores failure records in a global dictionary and writes to DuckDB.
     """
     failed_aggregated_batch = []
     failed_threshold = min(batch_size, max_records)
@@ -157,7 +157,7 @@ def failure_worker(
             logger.error(f"Error in failure_worker: {e}")
 
         if len(failed_aggregated_batch) >= failed_threshold:
-            write_to_motherduck(
+            write_to_duckdb(
                 failed_aggregated_batch,
                 config["failed_table"],
                 con_failure_worker,
@@ -167,7 +167,7 @@ def failure_worker(
 
     if failed_aggregated_batch:
         time.sleep(5)
-        write_to_motherduck(
+        write_to_duckdb(
             failed_aggregated_batch,
             config["failed_table"],
             con_failure_worker,
@@ -176,14 +176,14 @@ def failure_worker(
         failed_aggregated_batch.clear()
     con_failure_worker.close()
 
-def format_failed(imdb_id, reason_code, error_message, table_name, failure_queue, progress_updater):
+def format_failed(example_id, reason_code, error_message, table_name, failure_queue, progress_updater):
     """
     Format failed record before sending to failure worker.
     """
     progress_updater.increment_meta("❌", 1)
 
     failure_data = {
-        "imdb_id": imdb_id,
+        "example_id": example_id,
         "reason_code": reason_code,
         "error_message": error_message,
         "recorded_at": datetime.utcnow().isoformat(),
