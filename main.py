@@ -46,8 +46,8 @@ def main():
     parser.add_argument(
         "--endpoint",
         type=str,
-        default=os.getenv("DEFAULT_ENDPOINT", "awards"),
-        help="The endpoint key to use (default: 'awards')."
+        default=os.getenv("DEFAULT_ENDPOINT", "locations"),
+        help="The endpoint key to use (default: 'locations')."
     )
     args = parser.parse_args()
 

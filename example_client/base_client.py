@@ -41,7 +41,7 @@ class BaseClient:
         """
         logger.info(f"Fetching example IDs from table: {table_name}")
         # Simulate fetching IDs
-        return [(f"tt{id:07d}", counter_filter) for id in range(1, limit + 1)]
+        return [(f"{id:07d}", counter_filter) for id in range(1, limit + 1)]
 
     def close(self):
         """Close the session."""

@@ -119,7 +119,7 @@ def enum_requests(example_id, record_count=50, config=None, session=None):
 
 
 def get_location_details(example_id, record_count=100, config=None, session=None):
-    """Get locations of titles."""
+    """Get locations of example thing."""
     headers = {'content-type': 'application/json'}
     url = "https://caching.graphql.example.com/"
 
