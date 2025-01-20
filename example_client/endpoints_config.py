@@ -2,7 +2,6 @@ from example_client.endpoints.locations import parse_locations
 from example_client.client import enum_requests
 
 endpoints = {
-
     "locations": {
         "name": "locations",
         "table_name": "location_details",
@@ -14,6 +13,7 @@ endpoints = {
         "query_hash": "abc",
         "column_counter": None,
         "data_location": ("path", "to", "json", "data"),
+        "pageinfo_location": ("path", "to", "json", "pageInfo"),
         "id_param": "unique_id",
     },
 }

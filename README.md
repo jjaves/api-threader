@@ -67,7 +67,7 @@ python main.py --endpoint locations
 ---
 
 ## Project Structure
-- `api_client/`: API client logic and endpoint configurations.
+- `example_client/`: API client logic and endpoint configurations.
 - `utils/`: Utility modules for logging, retries, and workers.
 - `main.py`: Entry point for the tool.
 
