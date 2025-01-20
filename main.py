@@ -170,8 +170,7 @@ def main():
     except Exception as e:
         logger.error(f"Error while waiting for record_queue to join: {e}")
     
-    for _ in range(NUM_THREADS):
-        result_queue.put(SENTINEL)
+    result_queue.put(SENTINEL)
     app_state['terminate_flag'].set()
 
     try:
