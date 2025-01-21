@@ -13,16 +13,20 @@ def write_to_disk(batch, table_name):
         return
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    fail_path = './failed_batches/backups'
+    base_fail_path = './failed_batches/backups'
+    out_type = 'parquet'
+    parquet_dir = f'{base_fail_path}_{out_type}'
+    os.makedirs(parquet_dir, exist_ok=True)
+
     file_name = f'batches_{table_name.replace(".", "_")}_{timestamp}'
     batch_df = pd.DataFrame(batch)
 
     try:
-        out_type = 'parquet'
-        parquet_failed_path = f'{fail_path}_{out_type}/{file_name}.{out_type}'
-        batch_df.to_parquet(parquet_failed_path, engine='pyarrow', index=False)
+        parquet_file_path = os.path.join(parquet_dir, f'{file_name}.{out_type}')
+        batch_df.to_parquet(parquet_file_path, engine='pyarrow', index=False)
+        logger.debug(f"Parquet file written to disk at {parquet_file_path}")
     except Exception as e:
-        logger.error(f"Error in write_to_disk: {e}")
+        logger.error(f"Error in write_to_disk (parquet): {e}")
 
     logger.debug(f"JSON & Parquet file written to disk at {fail_path}")
 
