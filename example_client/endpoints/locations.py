@@ -30,7 +30,7 @@ def parse_locations(data, item_id):
                 master_list.append(master_item) 
                 if isinstance(master_item, list):
                     master_list.extend(master_item)
-                elif master_item:
+                else:
                     master_list.append(master_item)
 
 
