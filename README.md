@@ -82,3 +82,15 @@ python main.py --endpoint locations
 ## Troubleshooting
 - If you encounter issues with proxies, verify that Scrapoxy is running and the `.env` file is correctly configured.
 - For database-related issues, ensure that the DuckDB connection string is valid and the database file is accessible.
+
+---
+
+## To-Do List
+- [ ] Implement more robust error handling and retries for database write operations.
+- [ ] Add unit tests for core components (e.g., client functions, parsers, worker logic).
+- [ ] Add configuration to allow easier selection of different data storage backends (e.g., PostgreSQL, local files only).
+- [ ] Improve documentation on how to add and configure new API endpoints.
+- [ ] Add support for different output formats
+- [ ] Implement a way for resuming interrupted jobs, stateful.
+- [ ] Improve logging traceability of individual requests.
+- [ ] Explore options for dynamic scaling of worker threads based on workload.
